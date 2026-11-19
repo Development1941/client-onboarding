@@ -1,0 +1,960 @@
+import type {
+  AuditEntry,
+  Case,
+  Circulation,
+  Company,
+  Funder,
+  User,
+} from '@/types'
+
+export const users: User[] = [
+  {
+    id: 'u1',
+    name: 'Harshit Mehta',
+    email: 'harshit@embee.co.in',
+    role: 'admin',
+  },
+  {
+    id: 'u2',
+    name: 'Priya Sharma',
+    email: 'priya@embee.co.in',
+    role: 'admin',
+  },
+  {
+    id: 'u3',
+    name: 'Rajesh Kapoor',
+    email: 'rajesh@aetherindustries.in',
+    role: 'client',
+    caseId: 'c1',
+  },
+]
+
+export const companies: Company[] = [
+  {
+    id: 'co1',
+    name: 'Aether Industries Ltd',
+    constitution: 'Private Limited',
+    cin: 'U24100MH2014PTC255001',
+    pan: 'AABCA1234D',
+    incorporationYear: 2014,
+    locations: 'Registered office: Pune, Maharashtra · Manufacturing: SIPCOT, Chennai',
+    businessDescription:
+      'Specialty chemical manufacturer focused on intermediates for pharma and agrochemicals, with backward integration into key precursors and a growing custom-synthesis book for regulated markets.',
+    capacities: '12,000 MTPA finished intermediates · 2 multipurpose plants',
+    products: 'API intermediates, agrochemical intermediates, custom synthesis',
+    keyClients: 'Sun Pharma, Syngenta, UPL, Dr Reddy\'s',
+    people: [
+      {
+        id: 'p1',
+        name: 'Rajesh Kapoor',
+        role: 'Promoter / Managing Director',
+        profile:
+          '25+ years in specialty chemicals; previously plant head at Deepak Nitrite. Leads strategy, customer relationships and project execution.',
+        shareholding: 42,
+      },
+      {
+        id: 'p2',
+        name: 'Meera Kapoor',
+        role: 'Promoter / Director',
+        profile:
+          'Handles investor relations, treasury and board governance. Chartered accountant with prior Big-4 experience.',
+        shareholding: 18,
+      },
+      {
+        id: 'p3',
+        name: 'Ankit Desai',
+        role: 'CFO',
+        profile:
+          'Ex-KPMG; CA with 14 years in manufacturing finance. Owns working-capital cycle, lender reporting and project cost control.',
+        shareholding: 2,
+      },
+      {
+        id: 'p4',
+        name: 'Sneha Iyer',
+        role: 'Company Secretary',
+        profile:
+          'ACS; secretarial compliance for listed and unlisted entities. Owns ROC filings, board minutes and NDA / mandate documentation.',
+        shareholding: 0,
+      },
+      {
+        id: 'p5',
+        name: 'Vikram Shah',
+        role: 'Director (Independent)',
+        profile:
+          'Retired SBI GM — Mid Corporate. Advises on credit structuring and bank relationships.',
+        shareholding: 0,
+      },
+    ],
+    financials: [
+      {
+        id: 'fy1',
+        label: 'FY22',
+        revenue: 186,
+        ebitda: 28,
+        pat: 14,
+        netWorth: 72,
+        debt: 48,
+        cash: 8,
+        inventory: 32,
+        receivables: 41,
+      },
+      {
+        id: 'fy2',
+        label: 'FY23',
+        revenue: 224,
+        ebitda: 36,
+        pat: 19,
+        netWorth: 88,
+        debt: 52,
+        cash: 11,
+        inventory: 38,
+        receivables: 47,
+      },
+      {
+        id: 'fy3',
+        label: 'FY24',
+        revenue: 278,
+        ebitda: 48,
+        pat: 27,
+        netWorth: 110,
+        debt: 61,
+        cash: 14,
+        inventory: 44,
+        receivables: 52,
+      },
+    ],
+    facilities: [
+      {
+        id: 'ef1',
+        lender: 'State Bank of India',
+        facilityType: 'Term Loan',
+        limit: 35,
+        outstanding: 22,
+        interestRate: 9.4,
+        security: 'Plant & machinery, factory land at Chennai',
+        personalGuarantor: 'Rajesh Kapoor',
+      },
+      {
+        id: 'ef2',
+        lender: 'HDFC Bank',
+        facilityType: 'Cash Credit',
+        limit: 25,
+        outstanding: 18,
+        interestRate: 10.1,
+        security: 'Stock & book debts (1st charge)',
+        personalGuarantor: 'Rajesh Kapoor',
+      },
+      {
+        id: 'ef3',
+        lender: 'Siemens Financial Services',
+        facilityType: 'Equipment Finance',
+        limit: 8,
+        outstanding: 4.2,
+        interestRate: 11.2,
+        security: 'Hypothecation of funded equipment',
+        personalGuarantor: 'Rajesh Kapoor',
+      },
+    ],
+  },
+  {
+    id: 'co2',
+    name: 'Nimbus Logistics Pvt Ltd',
+    constitution: 'Private Limited',
+    cin: 'U63090KA2018PTC112200',
+    pan: 'AADCN9988P',
+    incorporationYear: 2018,
+    locations: 'HQ: Bengaluru · Hubs: Hyderabad, Mumbai, Pune',
+    businessDescription:
+      'Asset-light 3PL focused on temperature-controlled pharma and F&B distribution across South and West India, with contract warehousing and last-mile delivery.',
+    capacities: '180 vehicles under management · 4 cold warehouses · 1.2 lakh sq ft',
+    products: 'Cold-chain logistics, last-mile pharma delivery, contract warehousing',
+    keyClients: 'Dr Reddy\'s, Nestlé, Cipla, Britannia',
+    people: [
+      {
+        id: 'p6',
+        name: 'Vikram Rao',
+        role: 'Promoter / CEO',
+        profile:
+          'Ex-Delhivery ops lead; built Nimbus from 12 to 180 vehicles. Owns network design and enterprise sales.',
+        shareholding: 55,
+      },
+      {
+        id: 'p7',
+        name: 'Ananya Rao',
+        role: 'Promoter / Director — Ops',
+        profile: 'Runs warehouse ops and SLA governance across hubs.',
+        shareholding: 20,
+      },
+      {
+        id: 'p8',
+        name: 'Karan Mehta',
+        role: 'CFO',
+        profile: 'Ex-Flipkart finance; owns lender MIS and unit economics.',
+        shareholding: 5,
+      },
+    ],
+    financials: [
+      {
+        id: 'fy4',
+        label: 'FY22',
+        revenue: 42,
+        ebitda: 6,
+        pat: 2.1,
+        netWorth: 18,
+        debt: 12,
+        cash: 3,
+        inventory: 0,
+        receivables: 9,
+      },
+      {
+        id: 'fy5',
+        label: 'FY23',
+        revenue: 61,
+        ebitda: 9.5,
+        pat: 4.2,
+        netWorth: 24,
+        debt: 16,
+        cash: 4.5,
+        inventory: 0,
+        receivables: 12,
+      },
+      {
+        id: 'fy6',
+        label: 'FY24',
+        revenue: 88,
+        ebitda: 14,
+        pat: 7.1,
+        netWorth: 33,
+        debt: 21,
+        cash: 6,
+        inventory: 0,
+        receivables: 16,
+      },
+    ],
+    facilities: [
+      {
+        id: 'ef4',
+        lender: 'ICICI Bank',
+        facilityType: 'Cash Credit',
+        limit: 12,
+        outstanding: 9.5,
+        interestRate: 10.75,
+        security: 'Receivables & hypothecation of vehicles',
+        personalGuarantor: 'Vikram Rao',
+      },
+    ],
+  },
+  {
+    id: 'co3',
+    name: 'Crestline Textiles Ltd',
+    constitution: 'Public Limited (Unlisted)',
+    cin: 'U17120GJ2009PLC056440',
+    pan: 'AABCC4411L',
+    incorporationYear: 2009,
+    locations: 'Surat (spinning & weaving) · Tirupur (garmenting)',
+    businessDescription:
+      'Integrated textile manufacturer — spinning through garmenting for domestic retail and export, with a growing private-label book for European retailers.',
+    capacities: '48,000 spindles · 2.2 mn garments / year',
+    products: 'Cotton yarn, knitted fabric, ready garments',
+    keyClients: 'Reliance Retail, H&M, Lifestyle, Decathlon',
+    people: [
+      {
+        id: 'p9',
+        name: 'Suresh Patel',
+        role: 'Promoter / Chairman',
+        profile: 'Second-generation textile entrepreneur; board chair since 2016.',
+        shareholding: 38,
+      },
+      {
+        id: 'p10',
+        name: 'Nisha Patel',
+        role: 'Promoter / Managing Director',
+        profile: 'Runs commercial and export relationships.',
+        shareholding: 22,
+      },
+      {
+        id: 'p11',
+        name: 'Ravi Menon',
+        role: 'CFO',
+        profile: 'Ex-Arvind Ltd finance; owns lender relationships and cost of funds.',
+        shareholding: 1,
+      },
+      {
+        id: 'p12',
+        name: 'Pooja Shah',
+        role: 'Company Secretary',
+        profile: 'ACS; manages secretarial and listing-readiness workstreams.',
+        shareholding: 0,
+      },
+    ],
+    financials: [
+      {
+        id: 'fy7',
+        label: 'FY22',
+        revenue: 410,
+        ebitda: 52,
+        pat: 18,
+        netWorth: 145,
+        debt: 120,
+        cash: 12,
+        inventory: 68,
+        receivables: 55,
+      },
+      {
+        id: 'fy8',
+        label: 'FY23',
+        revenue: 385,
+        ebitda: 41,
+        pat: 8,
+        netWorth: 150,
+        debt: 138,
+        cash: 9,
+        inventory: 74,
+        receivables: 61,
+      },
+      {
+        id: 'fy9',
+        label: 'FY24',
+        revenue: 402,
+        ebitda: 48,
+        pat: 12,
+        netWorth: 158,
+        debt: 132,
+        cash: 11,
+        inventory: 70,
+        receivables: 58,
+      },
+    ],
+    facilities: [
+      {
+        id: 'ef5',
+        lender: 'Bank of Baroda',
+        facilityType: 'Term Loan',
+        limit: 80,
+        outstanding: 64,
+        interestRate: 9.85,
+        security: 'Land, plant & machinery at Surat',
+        personalGuarantor: 'Suresh Patel',
+      },
+      {
+        id: 'ef6',
+        lender: 'Union Bank of India',
+        facilityType: 'Cash Credit',
+        limit: 45,
+        outstanding: 38,
+        interestRate: 10.4,
+        security: 'Stock & receivables',
+        personalGuarantor: 'Suresh Patel, Nisha Patel',
+      },
+    ],
+  },
+]
+
+export const cases: Case[] = [
+  {
+    id: 'c1',
+    companyId: 'co1',
+    caseType: 'Term Loan',
+    status: 'Under Review',
+    assignedAdmin: 'Harshit Mehta',
+    clientLinkToken: 'aether-tl-7f3k',
+    clientLinkExpires: '2026-12-31',
+    mandateStatus: 'Done',
+    mandateDate: '2026-10-12',
+    mandateNote: 'Exclusive 90-day mandate signed. Soft copy filed; wet-ink couriered to Embee Mumbai.',
+    mandateCopy: 'Aether_Mandate_Signed_12Oct2026.pdf',
+    ndaStatus: 'In Progress',
+    ndaNote: 'Mutual NDA draft shared with client counsel on 4 Nov. Awaiting redlines.',
+    createdAt: '2026-10-08',
+    updatedAt: '2026-11-18',
+    sector: 'Specialty Chemicals',
+    geography: 'West India',
+    securityOffered: 'Project assets (1st charge) + personal guarantee of promoters',
+    completionPct: 78,
+    fields: {
+      requirementText:
+        'Greenfield capex for a new specialty intermediate block at the Chennai SIPCOT site to serve locked-in pharma export orders from FY27. Plant will produce two regulated intermediates with LOIs from Sun Pharma and a European CDMO.',
+      amountSought: 45,
+      otherInfo:
+        'Prefer a bank comfortable with chemical sector project finance. Target tenor 7–8 years with 12-month moratorium. Open to consortium if ticket is split. Please flag if any funder needs EC / environmental clearance pack early.',
+      projectReportStatus: 'Draft DPR ready — consultant sign-off expected by 28 Nov 2026',
+      landArea: '4.2 acres leased industrial land (SIPCOT, 25-year lease)',
+      landValuation: '₹6.8 Cr (Colliers valuation, Sep 2026)',
+      buildingType: 'G+1 process block, utilities shed, tank farm, ETP',
+      buildingSqft: '48,000 sq ft built-up',
+      architectEstimate: '₹9.2 Cr (L&T Design estimate)',
+      plantMachineryNotes:
+        'Primary list attached. Quotations from Glascoat, Pfaudler and a Korean reactor OEM. Long-lead items: glass-lined reactors (28 weeks) and scrubber system.',
+      projProducts: 'Intermediate A (pharma) · Intermediate B (agro)',
+      projCapacities: '3,600 MTPA Intermediate A · 2,400 MTPA Intermediate B',
+      projSellingPrice: 'A: ₹2.4 lakh/MT · B: ₹1.8 lakh/MT (LOI-linked)',
+      projRawMaterials: 'Key precursors sourced domestically; one import item from Korea',
+      projMaterialCost: '58% of sales (steady-state Year 3)',
+      projAdminExpenses: '₹4.8 Cr / year including plant overheads',
+      projectCost: 68,
+      promoterContribution: 23,
+      loanAsk: 45,
+      tenure: '7 years',
+      moratorium: '12 months from COD',
+    },
+    documents: [
+      {
+        id: 'd1',
+        name: 'Audited_Financials_FY22-24.pdf',
+        type: 'Audited Financials',
+        uploadedBy: 'Rajesh Kapoor',
+        uploadSource: 'client',
+        uploadedAt: '2026-10-14',
+        extractionStatus: 'extracted',
+        size: '2.4 MB',
+      },
+      {
+        id: 'd2',
+        name: 'Shareholding_Pattern_Sep2026.xlsx',
+        type: 'Shareholding Pattern',
+        uploadedBy: 'Rajesh Kapoor',
+        uploadSource: 'client',
+        uploadedAt: '2026-10-15',
+        extractionStatus: 'confirmed',
+        size: '180 KB',
+      },
+      {
+        id: 'd3',
+        name: 'SBI_Sanction_Letter_TermLoan.pdf',
+        type: 'Sanction Letter',
+        uploadedBy: 'Harshit Mehta',
+        uploadSource: 'admin',
+        uploadedAt: '2026-10-16',
+        extractionStatus: 'extracted',
+        size: '890 KB',
+      },
+      {
+        id: 'd4',
+        name: 'Project_Cost_Estimate_DPR.xlsx',
+        type: 'Project Report',
+        uploadedBy: 'Rajesh Kapoor',
+        uploadSource: 'client',
+        uploadedAt: '2026-11-02',
+        extractionStatus: 'pending',
+        size: '640 KB',
+      },
+      {
+        id: 'd5',
+        name: 'Land_Lease_SIPCOT.pdf',
+        type: 'Other',
+        uploadedBy: 'Rajesh Kapoor',
+        uploadSource: 'client',
+        uploadedAt: '2026-11-05',
+        extractionStatus: 'pending',
+        size: '1.6 MB',
+      },
+    ],
+    extractions: [
+      {
+        fieldKey: 'revenue_fy24',
+        label: 'Revenue FY24',
+        value: '₹278 Cr',
+        sourceDoc: 'Audited_Financials_FY22-24.pdf',
+        sourcePage: 4,
+        status: 'confirmed',
+      },
+      {
+        fieldKey: 'ebitda_fy24',
+        label: 'EBITDA FY24',
+        value: '₹48 Cr',
+        sourceDoc: 'Audited_Financials_FY22-24.pdf',
+        sourcePage: 4,
+        status: 'extracted',
+      },
+      {
+        fieldKey: 'pat_fy24',
+        label: 'PAT FY24',
+        value: '₹27 Cr',
+        sourceDoc: 'Audited_Financials_FY22-24.pdf',
+        sourcePage: 5,
+        status: 'extracted',
+      },
+      {
+        fieldKey: 'promoter_shareholding',
+        label: 'Promoter shareholding',
+        value: '60%',
+        sourceDoc: 'Shareholding_Pattern_Sep2026.xlsx',
+        sourcePage: 1,
+        status: 'confirmed',
+      },
+      {
+        fieldKey: 'sbi_term_limit',
+        label: 'SBI term loan limit',
+        value: '₹35 Cr',
+        sourceDoc: 'SBI_Sanction_Letter_TermLoan.pdf',
+        sourcePage: 2,
+        status: 'extracted',
+      },
+      {
+        fieldKey: 'sbi_interest',
+        label: 'SBI interest rate',
+        value: '9.40%',
+        sourceDoc: 'SBI_Sanction_Letter_TermLoan.pdf',
+        sourcePage: 3,
+        status: 'extracted',
+      },
+      {
+        fieldKey: 'project_cost',
+        label: 'Total project cost',
+        value: '₹68 Cr',
+        sourceDoc: 'Project_Cost_Estimate_DPR.xlsx',
+        sourcePage: 1,
+        status: 'pending',
+      },
+    ],
+  },
+  {
+    id: 'c2',
+    companyId: 'co2',
+    caseType: 'CC Limit',
+    status: 'Client Filling',
+    assignedAdmin: 'Priya Sharma',
+    clientLinkToken: 'nimbus-cc-2m9p',
+    clientLinkExpires: '2026-12-15',
+    mandateStatus: 'In Progress',
+    mandateNote: 'Mandate emailed 3 Nov. Soft-signed copy awaited from Vikram Rao.',
+    ndaStatus: 'Not Started',
+    createdAt: '2026-11-01',
+    updatedAt: '2026-11-17',
+    sector: 'Logistics',
+    geography: 'South & West India',
+    securityOffered: 'Current assets, receivables and hypothecation of leased fleet',
+    completionPct: 42,
+    fields: {
+      requirementText:
+        'Enhancement of working-capital limit to fund the Hyderabad cold warehouse fit-out and 40 additional leased vehicles for pharma last-mile contracts starting Jan 2027.',
+      amountSought: 20,
+      otherInfo:
+        'Peak utilisation hits 90% in Oct–Dec. Need headroom before festive season. Happy to share monthly stock & debtor statements for last 12 months.',
+      currentLimit: 12,
+      enhancementSought: 8,
+      enhancementReason:
+        'New Hyderabad cold warehouse (₹4.5 Cr fit-out) + 40 vehicles on lease; receivables stretch as enterprise billing moves to 60-day terms.',
+      utilisation: '78% average · 91% peak (last 6 months)',
+      debtorDays: '52 days',
+      creditorDays: '28 days',
+      inventoryDays: 'N/A (asset-light; spare parts only)',
+      salesProjections: 'FY25: ₹118 Cr · FY26: ₹155 Cr (management)',
+      stockDebtorNotes: 'Monthly S&D statements uploaded for Apr–Sep 2026.',
+    },
+    documents: [
+      {
+        id: 'd6',
+        name: 'Bank_Statement_Q2_FY25.pdf',
+        type: 'Bank Statement',
+        uploadedBy: 'Vikram Rao',
+        uploadSource: 'client',
+        uploadedAt: '2026-11-05',
+        extractionStatus: 'extracted',
+        size: '1.1 MB',
+      },
+      {
+        id: 'd7',
+        name: 'Stock_Debtor_Apr_Sep2026.xlsx',
+        type: 'Other',
+        uploadedBy: 'Karan Mehta',
+        uploadSource: 'client',
+        uploadedAt: '2026-11-08',
+        extractionStatus: 'pending',
+        size: '420 KB',
+      },
+    ],
+    extractions: [
+      {
+        fieldKey: 'cc_outstanding',
+        label: 'CC outstanding',
+        value: '₹9.5 Cr',
+        sourceDoc: 'Bank_Statement_Q2_FY25.pdf',
+        sourcePage: 1,
+        status: 'extracted',
+      },
+      {
+        fieldKey: 'avg_utilisation',
+        label: 'Average utilisation',
+        value: '78%',
+        sourceDoc: 'Bank_Statement_Q2_FY25.pdf',
+        sourcePage: 3,
+        status: 'extracted',
+      },
+    ],
+  },
+  {
+    id: 'c3',
+    companyId: 'co3',
+    caseType: 'Takeover',
+    status: 'Ready for Circulation',
+    assignedAdmin: 'Harshit Mehta',
+    clientLinkToken: 'crest-to-9xq1',
+    clientLinkExpires: '2026-11-30',
+    mandateStatus: 'Done',
+    mandateDate: '2026-09-20',
+    mandateNote: 'Exclusive mandate for takeover of BoB term loan. Executed in Surat.',
+    mandateCopy: 'Crestline_Mandate_20Sep2026.pdf',
+    ndaStatus: 'Done',
+    ndaDate: '2026-09-22',
+    ndaNote: 'Mutual NDA in place with Embee and proposed lenders.',
+    ndaCopy: 'Crestline_NDA_22Sep2026.pdf',
+    createdAt: '2026-09-18',
+    updatedAt: '2026-11-16',
+    sector: 'Textiles',
+    geography: 'West & South India',
+    securityOffered: 'Existing charged assets + corporate guarantee of Crestline',
+    completionPct: 92,
+    fields: {
+      requirementText:
+        'Takeover of the existing Bank of Baroda term loan with better pricing (target −50 bps) and a simplified security package, while retaining Union Bank CC.',
+      amountSought: 64,
+      otherInfo:
+        'Repayment track record is clean with no restructuring. Promoters open to partial personal guarantee release after 24 months of clean track with new lender.',
+      facilityToTakeover: 'Bank of Baroda Term Loan — ₹64 Cr outstanding of ₹80 Cr sanction',
+      takeoverReason:
+        'Rate reduction, longer residual tenor alignment with asset life, and consolidation of security documentation.',
+      takeoverLender: 'Bank of Baroda — Mid Corporate, Surat',
+      takeoverOutstanding: '₹64 Cr as of 31 Oct 2026',
+      repaymentTrack: 'Clean — no delays, no SMA, no restructuring since sanction (2019)',
+      securityHeld: '1st charge on Surat land, P&M; personal guarantees of Suresh & Nisha Patel',
+      foreclosureTerms: '2% foreclosure on outstanding; 45-day notice. BoB open to NOC for takeover.',
+    },
+    documents: [
+      {
+        id: 'd8',
+        name: 'BoB_Facility_Statement_Oct2026.pdf',
+        type: 'Sanction Letter',
+        uploadedBy: 'Harshit Mehta',
+        uploadSource: 'admin',
+        uploadedAt: '2026-09-25',
+        extractionStatus: 'confirmed',
+        size: '720 KB',
+      },
+      {
+        id: 'd9',
+        name: 'Repayment_Track_BoB.xlsx',
+        type: 'Other',
+        uploadedBy: 'Ravi Menon',
+        uploadSource: 'client',
+        uploadedAt: '2026-10-02',
+        extractionStatus: 'confirmed',
+        size: '210 KB',
+      },
+      {
+        id: 'd10',
+        name: 'Audited_Financials_Crestline_FY22-24.pdf',
+        type: 'Audited Financials',
+        uploadedBy: 'Ravi Menon',
+        uploadSource: 'client',
+        uploadedAt: '2026-09-28',
+        extractionStatus: 'confirmed',
+        size: '3.1 MB',
+      },
+    ],
+    extractions: [
+      {
+        fieldKey: 'outstanding',
+        label: 'Outstanding amount',
+        value: '₹64 Cr',
+        sourceDoc: 'BoB_Facility_Statement_Oct2026.pdf',
+        sourcePage: 1,
+        status: 'confirmed',
+      },
+      {
+        fieldKey: 'interest_rate',
+        label: 'Current interest rate',
+        value: '9.85%',
+        sourceDoc: 'BoB_Facility_Statement_Oct2026.pdf',
+        sourcePage: 2,
+        status: 'confirmed',
+      },
+      {
+        fieldKey: 'revenue_fy24',
+        label: 'Revenue FY24',
+        value: '₹402 Cr',
+        sourceDoc: 'Audited_Financials_Crestline_FY22-24.pdf',
+        sourcePage: 6,
+        status: 'confirmed',
+      },
+    ],
+  },
+  {
+    id: 'c4',
+    companyId: 'co1',
+    caseType: 'Special Situation',
+    status: 'Draft',
+    assignedAdmin: 'Priya Sharma',
+    clientLinkToken: 'aether-ss-4h2n',
+    clientLinkExpires: '2027-01-15',
+    mandateStatus: 'Not Started',
+    ndaStatus: 'Not Started',
+    createdAt: '2026-11-10',
+    updatedAt: '2026-11-12',
+    sector: 'Specialty Chemicals',
+    geography: 'West India',
+    securityOffered: 'To be confirmed after stress assessment',
+    completionPct: 12,
+    fields: {
+      requirementText:
+        'Exploratory discussion on refinancing a stressed equipment facility and bridging a temporary working-capital gap after a delayed export shipment.',
+      amountSought: 15,
+      otherInfo: 'Internal only for now — do not share with funders until mandate is signed.',
+      stressScenario:
+        'One large export shipment delayed 9 weeks due to buyer QC hold; cash conversion stretched and equipment EMI under pressure.',
+      accountStatus: 'Standard — not SMA as of Oct 2026',
+      overdues: 'Equipment EMI overdue by 18 days (₹42 Lakh); CC interest current',
+      litigation: 'None',
+      turnaroundPlan:
+        'Shipment released week of 10 Nov; collections expected by 30 Nov. Seeking 6-month bridge + EMI reschedule.',
+      specialSecurity: 'Additional charge on receivables from the delayed shipment',
+    },
+    documents: [],
+    extractions: [],
+  },
+]
+
+export const funders: Funder[] = [
+  {
+    id: 'f1',
+    name: 'State Bank of India — Mid Corporate',
+    category: 'PSU Bank',
+    products: ['Term Loan', 'CC Limit', 'Takeover'],
+    ticketMin: 25,
+    ticketMax: 200,
+    sectors: ['Specialty Chemicals', 'Manufacturing', 'Textiles'],
+    geography: ['West India', 'Pan India'],
+    contacts: [
+      { name: 'Anil Joshi', email: 'anil.joshi@sbi.co.in', phone: '+91 98765 10001' },
+      { name: 'Kavita Nair', email: 'kavita.nair@sbi.co.in', phone: '+91 98765 10002' },
+    ],
+    notes: 'Strong on chemical project finance; prefers DPR with consultant sign-off.',
+  },
+  {
+    id: 'f2',
+    name: 'HDFC Bank — Business Banking',
+    category: 'Private Bank',
+    products: ['Term Loan', 'CC Limit', 'Acquisition Finance'],
+    ticketMin: 10,
+    ticketMax: 150,
+    sectors: ['Logistics', 'Specialty Chemicals', 'Healthcare'],
+    geography: ['West India', 'South India', 'Pan India'],
+    contacts: [
+      { name: 'Rohit Malhotra', email: 'rohit.m@hdfcbank.com', phone: '+91 98200 22011' },
+    ],
+    notes: 'Competitive on working capital; quick turnaround for existing customers.',
+  },
+  {
+    id: 'f3',
+    name: 'Bajaj Finance — Corporate',
+    category: 'NBFC',
+    products: ['Term Loan', 'Special Situation', 'Buyback Funding'],
+    ticketMin: 15,
+    ticketMax: 100,
+    sectors: ['Manufacturing', 'Textiles', 'Specialty Chemicals'],
+    geography: ['West India', 'North India'],
+    contacts: [
+      { name: 'Neha Gupta', email: 'neha.gupta@bajajfinserv.in', phone: '+91 98111 33440' },
+    ],
+  },
+  {
+    id: 'f4',
+    name: 'Motilal Oswal AIF — Credit',
+    category: 'AIF',
+    products: ['Special Situation', 'Acquisition Finance', 'Buyback Funding'],
+    ticketMin: 40,
+    ticketMax: 250,
+    sectors: ['All sectors'],
+    geography: ['Pan India'],
+    contacts: [
+      { name: 'Siddharth Menon', email: 's.menon@motilaloswal.com' },
+    ],
+    notes: 'Flexible structures; expects higher IRR and board observer rights on special situations.',
+  },
+  {
+    id: 'f5',
+    name: 'Axis Bank — Corporate Credit',
+    category: 'Private Bank',
+    products: ['Term Loan', 'CC Limit', 'Takeover', 'Acquisition Finance'],
+    ticketMin: 20,
+    ticketMax: 300,
+    sectors: ['Textiles', 'Logistics', 'Specialty Chemicals'],
+    geography: ['Pan India'],
+    contacts: [
+      { name: 'Deepa Krishnan', email: 'deepa.k@axisbank.com', phone: '+91 98880 55110' },
+      { name: 'Farhan Ali', email: 'farhan.ali@axisbank.com' },
+    ],
+  },
+  {
+    id: 'f6',
+    name: 'Tata Capital — Corporate Finance',
+    category: 'NBFC',
+    products: ['Term Loan', 'CC Limit', 'Takeover'],
+    ticketMin: 15,
+    ticketMax: 120,
+    sectors: ['Manufacturing', 'Logistics', 'Textiles'],
+    geography: ['West India', 'South India', 'Pan India'],
+    contacts: [
+      { name: 'Amit Kulkarni', email: 'amit.kulkarni@tatacapital.com' },
+    ],
+  },
+]
+
+export const circulations: Circulation[] = [
+  {
+    id: 'cir1',
+    caseId: 'c3',
+    funderId: 'f1',
+    dateSent: '2026-11-12',
+    responseStatus: 'Interested',
+    notes: 'Requested updated stock statement and promoter net-worth certificates. Meeting slotted for 21 Nov.',
+    matchReason: 'Ticket & textiles sector fit; active takeover product',
+    score: 92,
+    approvedBy: 'Harshit Mehta',
+  },
+  {
+    id: 'cir2',
+    caseId: 'c3',
+    funderId: 'f5',
+    dateSent: '2026-11-12',
+    responseStatus: 'Queries Raised',
+    notes: 'Asked for security coverage ratio, escrow mechanics and residual tenor vs asset life.',
+    matchReason: 'Strong takeover appetite in West India; competitive pricing history',
+    score: 88,
+    approvedBy: 'Harshit Mehta',
+  },
+  {
+    id: 'cir3',
+    caseId: 'c3',
+    funderId: 'f2',
+    dateSent: '2026-11-14',
+    responseStatus: 'Sent',
+    notes: 'Two-pager + BoB facility statement shared with Rohit Malhotra.',
+    matchReason: 'Private-bank alternate with competitive pricing on takeovers',
+    score: 81,
+    approvedBy: 'Harshit Mehta',
+  },
+]
+
+export const auditLog: AuditEntry[] = [
+  {
+    id: 'a1',
+    caseId: 'c1',
+    user: 'Rajesh Kapoor',
+    action: 'Uploaded Audited_Financials_FY22-24.pdf',
+    at: '2026-10-14 11:22',
+  },
+  {
+    id: 'a2',
+    caseId: 'c1',
+    user: 'Harshit Mehta',
+    action: 'Confirmed extraction: Promoter shareholding = 60%',
+    at: '2026-10-16 09:05',
+  },
+  {
+    id: 'a3',
+    caseId: 'c1',
+    user: 'Harshit Mehta',
+    action: 'Updated project cost to ₹68 Cr and loan ask to ₹45 Cr',
+    at: '2026-11-02 16:40',
+  },
+  {
+    id: 'a4',
+    caseId: 'c1',
+    user: 'Rajesh Kapoor',
+    action: 'Added note for Embee team on tenor preference and EC pack',
+    at: '2026-11-08 14:12',
+  },
+  {
+    id: 'a5',
+    caseId: 'c1',
+    user: 'Harshit Mehta',
+    action: 'Marked mandate Done; uploaded signed copy',
+    at: '2026-10-12 17:05',
+  },
+  {
+    id: 'a6',
+    caseId: 'c3',
+    user: 'Harshit Mehta',
+    action: 'Approved circulation of two-pager to SBI, Axis and HDFC',
+    at: '2026-11-12 10:30',
+  },
+  {
+    id: 'a7',
+    caseId: 'c3',
+    user: 'Harshit Mehta',
+    action: 'Recorded Axis Bank response: Queries Raised',
+    at: '2026-11-15 12:18',
+  },
+  {
+    id: 'a8',
+    caseId: 'c2',
+    user: 'Priya Sharma',
+    action: 'Created CC Limit case and sent client link to Vikram Rao',
+    at: '2026-11-01 09:40',
+  },
+]
+
+export function formatCr(n: number) {
+  if (n === undefined || n === null || Number.isNaN(n)) return '—'
+  return `₹${n.toLocaleString('en-IN')} Cr`
+}
+
+export function ratioEbitdaMargin(revenue: number, ebitda: number) {
+  if (!revenue) return '—'
+  return `${((ebitda / revenue) * 100).toFixed(1)}%`
+}
+
+export function ratioDebtEquity(debt: number, netWorth: number) {
+  if (!netWorth) return '—'
+  return (debt / netWorth).toFixed(2)
+}
+
+export function ratioPatMargin(revenue: number, pat: number) {
+  if (!revenue) return '—'
+  return `${((pat / revenue) * 100).toFixed(1)}%`
+}
+
+export function matchFunders(
+  caseItem: Case,
+): Array<Funder & { score: number; reason: string }> {
+  return funders
+    .map((f) => {
+      let score = 35
+      const reasons: string[] = []
+      if (f.products.includes(caseItem.caseType)) {
+        score += 25
+        reasons.push(`${caseItem.caseType} product`)
+      }
+      if (
+        caseItem.fields.amountSought >= f.ticketMin &&
+        caseItem.fields.amountSought <= f.ticketMax
+      ) {
+        score += 20
+        reasons.push('ticket in range')
+      }
+      if (
+        f.sectors.includes(caseItem.sector) ||
+        f.sectors.includes('All sectors')
+      ) {
+        score += 12
+        reasons.push('sector fit')
+      }
+      if (
+        f.geography.includes(caseItem.geography) ||
+        f.geography.includes('Pan India') ||
+        caseItem.geography.split(/[&,]/).some((g) =>
+          f.geography.some((fg) => fg.includes(g.trim()) || g.trim().includes(fg)),
+        )
+      ) {
+        score += 8
+        reasons.push('geography')
+      }
+      return {
+        ...f,
+        score: Math.min(score, 99),
+        reason: reasons.length ? reasons.join(' · ') : 'Partial fit — review manually',
+      }
+    })
+    .sort((a, b) => b.score - a.score)
+}

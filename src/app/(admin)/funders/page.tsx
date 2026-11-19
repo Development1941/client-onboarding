@@ -3,11 +3,13 @@
 import { useMemo, useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import { formatCr } from '@/data/mock'
-import type { FunderCategory } from '@/types'
+import type { CaseType, FunderCategory } from '@/types'
 import { PageHeader } from '@/components/PageHeader'
 import {
   Badge,
+  Button,
   EmptyState,
+  Field,
   Input,
   Section,
   Select,
@@ -23,10 +25,31 @@ const CATEGORIES: Array<FunderCategory | 'All'> = [
   'Other Financial Institution',
 ]
 
+const PRODUCTS: CaseType[] = [
+  'Term Loan',
+  'CC Limit',
+  'Takeover',
+  'Buyback Funding',
+  'Special Situation',
+  'Acquisition Finance',
+]
+
 export default function FundersPage() {
-  const { funders, circulations } = useApp()
+  const { funders, circulations, addFunder } = useApp()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<FunderCategory | 'All'>('All')
+  const [showAdd, setShowAdd] = useState(false)
+  const [form, setForm] = useState({
+    name: '',
+    category: 'Private Bank' as FunderCategory,
+    product: 'Term Loan' as CaseType,
+    ticketMin: 10,
+    ticketMax: 100,
+    sectors: 'Manufacturing',
+    geography: 'Pan India',
+    contactName: '',
+    contactEmail: '',
+  })
 
   const filtered = useMemo(() => {
     return funders.filter((f) => {
@@ -41,6 +64,33 @@ export default function FundersPage() {
     })
   }, [funders, query, category])
 
+  function handleAdd() {
+    if (!form.name.trim() || !form.contactEmail.trim()) return
+    addFunder({
+      name: form.name.trim(),
+      category: form.category,
+      products: [form.product],
+      ticketMin: form.ticketMin,
+      ticketMax: form.ticketMax,
+      sectors: form.sectors.split(',').map((s) => s.trim()).filter(Boolean),
+      geography: form.geography.split(',').map((s) => s.trim()).filter(Boolean),
+      contactName: form.contactName.trim() || 'Contact',
+      contactEmail: form.contactEmail.trim(),
+    })
+    setShowAdd(false)
+    setForm({
+      name: '',
+      category: 'Private Bank',
+      product: 'Term Loan',
+      ticketMin: 10,
+      ticketMax: 100,
+      sectors: 'Manufacturing',
+      geography: 'Pan India',
+      contactName: '',
+      contactEmail: '',
+    })
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -52,6 +102,9 @@ export default function FundersPage() {
           { label: 'Onboarding' },
           { label: 'Funders' },
         ]}
+        actions={
+          <Button onClick={() => setShowAdd(true)}>Add funder</Button>
+        }
       />
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -144,11 +197,135 @@ export default function FundersPage() {
           {filtered.length === 0 ? (
             <EmptyState
               title="No funders match"
-              description="Try a different search or category filter."
+              description="Try a different search or category filter, or add a funder."
             />
           ) : null}
         </div>
       </Section>
+
+      {showAdd ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 p-4 sm:items-center">
+          <div className="w-full max-w-lg border border-line bg-panel shadow-2xl">
+            <div className="border-b border-line px-6 py-4">
+              <h3 className="font-display text-[1.5rem] text-ink">Add funder</h3>
+              <p className="mt-1 text-[13px] text-muted">
+                Institutions are added one by one. They receive the two-pager by
+                email only — no login.
+              </p>
+            </div>
+            <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+              <Field label="Institution name" className="sm:col-span-2">
+                <Input
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                />
+              </Field>
+              <Field label="Category">
+                <Select
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      category: e.target.value as FunderCategory,
+                    }))
+                  }
+                >
+                  {CATEGORIES.filter((c) => c !== 'All').map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Primary product">
+                <Select
+                  value={form.product}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      product: e.target.value as CaseType,
+                    }))
+                  }
+                >
+                  {PRODUCTS.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Ticket min (₹ Cr)">
+                <Input
+                  type="number"
+                  value={form.ticketMin}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      ticketMin: Number(e.target.value),
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Ticket max (₹ Cr)">
+                <Input
+                  type="number"
+                  value={form.ticketMax}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      ticketMax: Number(e.target.value),
+                    }))
+                  }
+                />
+              </Field>
+              <Field label="Sectors (comma-separated)" className="sm:col-span-2">
+                <Input
+                  value={form.sectors}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, sectors: e.target.value }))
+                  }
+                />
+              </Field>
+              <Field
+                label="Geography (comma-separated)"
+                className="sm:col-span-2"
+              >
+                <Input
+                  value={form.geography}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, geography: e.target.value }))
+                  }
+                />
+              </Field>
+              <Field label="Contact name">
+                <Input
+                  value={form.contactName}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, contactName: e.target.value }))
+                  }
+                />
+              </Field>
+              <Field label="Contact email">
+                <Input
+                  type="email"
+                  value={form.contactEmail}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, contactEmail: e.target.value }))
+                  }
+                />
+              </Field>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-line px-6 py-4">
+              <Button variant="secondary" onClick={() => setShowAdd(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAdd}>Save funder</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

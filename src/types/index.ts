@@ -32,6 +32,24 @@ export type FunderCategory =
   | 'AIF'
   | 'Other Financial Institution'
 
+export type DocCategory =
+  | 'financial'
+  | 'bank_statement'
+  | 'gst'
+  | 'sanction'
+  | 'company_kyc'
+  | 'individual_kyc'
+  | 'other'
+
+export type VerificationStatus =
+  | 'Pending'
+  | 'Uploaded'
+  | 'Under Verification'
+  | 'Approved'
+  | 'Rejected'
+
+export type ShareholderType = 'Individual' | 'Corporate'
+
 export interface User {
   id: string
   name: string
@@ -44,8 +62,16 @@ export interface Person {
   id: string
   name: string
   role: string
+  din?: string
   profile: string
   shareholding: number
+}
+
+export interface Shareholder {
+  id: string
+  name: string
+  type: ShareholderType
+  percentage: number
 }
 
 export interface FinancialYear {
@@ -78,13 +104,16 @@ export interface Company {
   constitution: string
   cin: string
   pan: string
+  gstin?: string
   incorporationYear: number
+  registeredAddress: string
   locations: string
   businessDescription: string
   capacities: string
   products: string
   keyClients: string
   people: Person[]
+  shareholders: Shareholder[]
   financials: FinancialYear[]
   facilities: ExistingFacility[]
 }
@@ -102,11 +131,33 @@ export interface DocumentItem {
   id: string
   name: string
   type: string
+  category: DocCategory
+  periodLabel?: string
   uploadedBy: string
   uploadSource: 'admin' | 'client'
   uploadedAt: string
   extractionStatus: ExtractionStatus
+  verificationStatus: VerificationStatus
   size: string
+  version: number
+  linkedPersonId?: string
+}
+
+export interface SanctionLetter {
+  id: string
+  bankName: string
+  facilityType: string
+  sanctionAmount: number
+  sanctionDate: string
+  terms: string
+  documentName?: string
+}
+
+export interface IntakeConfig {
+  financialYearsRequired: number
+  financialYearLabels: string[]
+  bankStatementMonths: number
+  gstMonths: number
 }
 
 export interface CaseFields {
@@ -114,7 +165,6 @@ export interface CaseFields {
   amountSought: number
   otherInfo: string
 
-  // Term Loan
   projectReportStatus?: string
   landArea?: string
   landValuation?: string
@@ -134,7 +184,6 @@ export interface CaseFields {
   tenure?: string
   moratorium?: string
 
-  // CC Limit
   currentLimit?: number
   enhancementSought?: number
   enhancementReason?: string
@@ -145,7 +194,6 @@ export interface CaseFields {
   salesProjections?: string
   stockDebtorNotes?: string
 
-  // Takeover
   facilityToTakeover?: string
   takeoverReason?: string
   takeoverLender?: string
@@ -154,7 +202,6 @@ export interface CaseFields {
   securityHeld?: string
   foreclosureTerms?: string
 
-  // Buyback
   buybackPurpose?: string
   exitingParty?: string
   buybackAmount?: number
@@ -164,7 +211,6 @@ export interface CaseFields {
   buybackRepaymentSource?: string
   buybackApprovals?: string
 
-  // Special Situation
   stressScenario?: string
   accountStatus?: string
   overdues?: string
@@ -172,7 +218,6 @@ export interface CaseFields {
   turnaroundPlan?: string
   specialSecurity?: string
 
-  // Acquisition
   targetCompany?: string
   dealValuation?: number
   consideration?: string
@@ -203,6 +248,8 @@ export interface Case {
   fields: CaseFields
   documents: DocumentItem[]
   extractions: ExtractedValue[]
+  sanctionLetters: SanctionLetter[]
+  intakeConfig: IntakeConfig
   sector: string
   geography: string
   securityOffered: string

@@ -23,10 +23,16 @@ import type {
   Circulation,
   CirculationResponse,
   Company,
+  DocCategory,
+  DocumentItem,
   ExtractionStatus,
   Funder,
   MandateStatus,
+  Person,
+  SanctionLetter,
+  Shareholder,
   User,
+  VerificationStatus,
 } from '@/types'
 
 interface AppContextValue {
@@ -44,6 +50,9 @@ interface AppContextValue {
   getCaseByToken: (token: string) => Case | undefined
   updateCase: (id: string, patch: Partial<Case>) => void
   updateCaseFields: (id: string, fields: Partial<Case['fields']>) => void
+  updateCompany: (id: string, patch: Partial<Company>) => void
+  setCompanyPeople: (companyId: string, people: Person[]) => void
+  setCompanyShareholders: (companyId: string, shareholders: Shareholder[]) => void
   updateExtraction: (
     caseId: string,
     fieldKey: string,
@@ -56,7 +65,23 @@ interface AppContextValue {
     note?: string,
     date?: string,
   ) => void
-  addDocument: (caseId: string, doc: { name: string; type: string }) => void
+  addDocument: (
+    caseId: string,
+    doc: {
+      name: string
+      type: string
+      category: DocCategory
+      periodLabel?: string
+      linkedPersonId?: string
+    },
+  ) => void
+  updateDocumentVerification: (
+    caseId: string,
+    docId: string,
+    status: VerificationStatus,
+  ) => void
+  updateIntakeConfig: (caseId: string, patch: Partial<Case['intakeConfig']>) => void
+  setSanctionLetters: (caseId: string, letters: SanctionLetter[]) => void
   addCirculation: (
     caseId: string,
     funderId: string,
@@ -74,6 +99,17 @@ interface AppContextValue {
     amountSought: number
     requirementText: string
   }) => Case
+  addFunder: (input: {
+    name: string
+    category: Funder['category']
+    products: string[]
+    ticketMin: number
+    ticketMax: number
+    sectors: string[]
+    geography: string[]
+    contactName: string
+    contactEmail: string
+  }) => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -81,9 +117,9 @@ const AppContext = createContext<AppContextValue | null>(null)
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [ready, setReady] = useState(false)
-  const [companies] = useState(seedCompanies)
+  const [companies, setCompanies] = useState(seedCompanies)
   const [cases, setCases] = useState(seedCases)
-  const [funders] = useState(seedFunders)
+  const [funders, setFunders] = useState(seedFunders)
   const [circulations, setCirculations] = useState(seedCirculations)
   const [auditLog, setAuditLog] = useState(seedAudit)
 
@@ -179,6 +215,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [pushAudit],
   )
 
+  const updateCompany = useCallback(
+    (id: string, patch: Partial<Company>) => {
+      setCompanies((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+      )
+      const linked = cases.find((c) => c.companyId === id)
+      if (linked) pushAudit(linked.id, `Updated company profile: ${Object.keys(patch).join(', ')}`)
+    },
+    [cases, pushAudit],
+  )
+
+  const setCompanyPeople = useCallback(
+    (companyId: string, people: Person[]) => {
+      setCompanies((prev) =>
+        prev.map((c) => (c.id === companyId ? { ...c, people } : c)),
+      )
+      const linked = cases.find((c) => c.companyId === companyId)
+      if (linked) pushAudit(linked.id, 'Updated directors / partners list')
+    },
+    [cases, pushAudit],
+  )
+
+  const setCompanyShareholders = useCallback(
+    (companyId: string, shareholders: Shareholder[]) => {
+      setCompanies((prev) =>
+        prev.map((c) => (c.id === companyId ? { ...c, shareholders } : c)),
+      )
+      const linked = cases.find((c) => c.companyId === companyId)
+      if (linked) pushAudit(linked.id, 'Updated shareholding pattern')
+    },
+    [cases, pushAudit],
+  )
+
   const updateExtraction = useCallback(
     (caseId: string, fieldKey: string, status: ExtractionStatus) => {
       setCases((prev) =>
@@ -231,32 +300,82 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const addDocument = useCallback(
-    (caseId: string, doc: { name: string; type: string }) => {
+    (
+      caseId: string,
+      doc: {
+        name: string
+        type: string
+        category: DocCategory
+        periodLabel?: string
+        linkedPersonId?: string
+      },
+    ) => {
+      const item: DocumentItem = {
+        id: `d${Date.now()}`,
+        name: doc.name,
+        type: doc.type,
+        category: doc.category,
+        periodLabel: doc.periodLabel,
+        uploadedBy: user?.name ?? 'Unknown',
+        uploadSource: user?.role === 'client' ? 'client' : 'admin',
+        uploadedAt: new Date().toISOString().slice(0, 10),
+        extractionStatus: 'pending',
+        verificationStatus: 'Uploaded',
+        size: '—',
+        version: 1,
+        linkedPersonId: doc.linkedPersonId,
+      }
       setCases((prev) =>
         prev.map((c) =>
-          c.id === caseId
-            ? {
-                ...c,
-                documents: [
-                  {
-                    id: `d${Date.now()}`,
-                    name: doc.name,
-                    type: doc.type,
-                    uploadedBy: user?.name ?? 'Unknown',
-                    uploadSource: user?.role === 'client' ? 'client' : 'admin',
-                    uploadedAt: new Date().toISOString().slice(0, 10),
-                    extractionStatus: 'pending',
-                    size: '—',
-                  },
-                  ...c.documents,
-                ],
-              }
-            : c,
+          c.id === caseId ? { ...c, documents: [item, ...c.documents] } : c,
         ),
       )
       pushAudit(caseId, `Uploaded ${doc.name}`)
     },
     [pushAudit, user],
+  )
+
+  const updateDocumentVerification = useCallback(
+    (caseId: string, docId: string, status: VerificationStatus) => {
+      setCases((prev) =>
+        prev.map((c) =>
+          c.id === caseId
+            ? {
+                ...c,
+                documents: c.documents.map((d) =>
+                  d.id === docId ? { ...d, verificationStatus: status } : d,
+                ),
+              }
+            : c,
+        ),
+      )
+      pushAudit(caseId, `Document ${docId} marked ${status}`)
+    },
+    [pushAudit],
+  )
+
+  const updateIntakeConfig = useCallback(
+    (caseId: string, patch: Partial<Case['intakeConfig']>) => {
+      setCases((prev) =>
+        prev.map((c) =>
+          c.id === caseId
+            ? { ...c, intakeConfig: { ...c.intakeConfig, ...patch } }
+            : c,
+        ),
+      )
+      pushAudit(caseId, 'Updated document look-back periods')
+    },
+    [pushAudit],
+  )
+
+  const setSanctionLetters = useCallback(
+    (caseId: string, letters: SanctionLetter[]) => {
+      setCases((prev) =>
+        prev.map((c) => (c.id === caseId ? { ...c, sanctionLetters: letters } : c)),
+      )
+      pushAudit(caseId, 'Updated bank sanction letters')
+    },
+    [pushAudit],
   )
 
   const addCirculation = useCallback(
@@ -271,6 +390,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           notes: '',
           matchReason: reason,
           score,
+          approvedBy: user?.name,
         },
         ...prev,
       ])
@@ -281,7 +401,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       )
       pushAudit(caseId, `Circulated two-pager to funder ${funderId}`)
     },
-    [pushAudit],
+    [pushAudit, user],
   )
 
   const updateCirculationStatus = useCallback(
@@ -293,6 +413,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
             : c,
         ),
       )
+    },
+    [],
+  )
+
+  const addFunder = useCallback(
+    (input: {
+      name: string
+      category: Funder['category']
+      products: string[]
+      ticketMin: number
+      ticketMax: number
+      sectors: string[]
+      geography: string[]
+      contactName: string
+      contactEmail: string
+    }) => {
+      setFunders((prev) => [
+        {
+          id: `f${Date.now()}`,
+          name: input.name,
+          category: input.category,
+          products: input.products,
+          ticketMin: input.ticketMin,
+          ticketMax: input.ticketMax,
+          sectors: input.sectors,
+          geography: input.geography,
+          contacts: [
+            { name: input.contactName, email: input.contactEmail },
+          ],
+        },
+        ...prev,
+      ])
     },
     [],
   )
@@ -322,6 +474,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         geography: 'Pan India',
         securityOffered: 'TBD',
         completionPct: 8,
+        intakeConfig: {
+          financialYearsRequired: 3,
+          financialYearLabels: ['FY22', 'FY23', 'FY24'],
+          bankStatementMonths: 3,
+          gstMonths: 12,
+        },
+        sanctionLetters: [],
         fields: {
           requirementText: input.requirementText,
           amountSought: input.amountSought,
@@ -353,12 +512,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getCaseByToken,
       updateCase,
       updateCaseFields,
+      updateCompany,
+      setCompanyPeople,
+      setCompanyShareholders,
       updateExtraction,
       updateMandateNda,
       addDocument,
+      updateDocumentVerification,
+      updateIntakeConfig,
+      setSanctionLetters,
       addCirculation,
       updateCirculationStatus,
       createCase,
+      addFunder,
     }),
     [
       user,
@@ -375,12 +541,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getCaseByToken,
       updateCase,
       updateCaseFields,
+      updateCompany,
+      setCompanyPeople,
+      setCompanyShareholders,
       updateExtraction,
       updateMandateNda,
       addDocument,
+      updateDocumentVerification,
+      updateIntakeConfig,
+      setSanctionLetters,
       addCirculation,
       updateCirculationStatus,
       createCase,
+      addFunder,
     ],
   )
 

@@ -1,7 +1,10 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { CaseDetail } from '@/components/CaseDetail'
-
-export default function CasePage() {
-  return <CaseDetail />
+export default async function CaseIndexPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  redirect(`/cases/${id}/company`)
 }

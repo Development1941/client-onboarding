@@ -15,7 +15,7 @@ import type {
   Company,
   MandateStatus,
 } from '@/types'
-import { PageHeader } from '@/components/PageHeader'
+import { CaseTypeFields } from '@/components/case/CaseTypeFields'
 import {
   Badge,
   Button,
@@ -28,24 +28,15 @@ import {
   statusTone,
 } from '@/components/ui'
 
-type Tab =
-  | 'intake'
+export type CaseSectionId =
+  | 'requirement'
   | 'extraction'
   | 'mandate'
   | 'circulation'
   | 'twopager'
   | 'audit'
 
-const tabs: { id: Tab; label: string; screen?: string }[] = [
-  { id: 'intake', label: 'Intake', screen: '2' },
-  { id: 'extraction', label: 'Extraction', screen: '2' },
-  { id: 'mandate', label: 'Mandate & NDA', screen: '4' },
-  { id: 'circulation', label: 'Circulation' },
-  { id: 'twopager', label: 'Two-pager' },
-  { id: 'audit', label: 'Audit log' },
-]
-
-export function CaseDetail() {
+export function CaseSection({ section }: { section: CaseSectionId }) {
   const params = useParams<{ id: string }>()
   const id = params.id
   const {
@@ -62,7 +53,6 @@ export function CaseDetail() {
     funders,
     auditLog,
   } = useApp()
-  const [tab, setTab] = useState<Tab>('intake')
 
   const caseItem = getCase(id)
   const company = caseItem ? getCompany(caseItem.companyId) : undefined
@@ -79,153 +69,77 @@ export function CaseDetail() {
     )
   }
 
-  return (
-    <div className="space-y-5">
-      <PageHeader
-        eyebrow="Case workspace"
-        title={company.name}
-        description={`${caseItem.caseType} · ${formatCr(caseItem.fields.amountSought)} sought · Assigned to ${caseItem.assignedAdmin} · Completeness ${caseItem.completionPct}%`}
-        breadcrumbs={[
-          { label: 'Cases', href: '/' },
-          { label: company.name },
-        ]}
-        actions={
-          <>
-            <Select
-              value={caseItem.status}
-              onChange={(e) =>
-                updateCase(caseItem.id, {
-                  status: e.target.value as Case['status'],
-                })
-              }
-              className="w-auto min-w-[11rem]"
-            >
-              {[
-                'Draft',
-                'Client Filling',
-                'Under Review',
-                'Ready for Circulation',
-                'Circulated',
-                'Closed',
-              ].map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </Select>
-            <Button
-              variant="secondary"
-              onClick={() =>
-                navigator.clipboard.writeText(
-                  `${window.location.origin}/c/${caseItem.clientLinkToken}`,
-                )
-              }
-            >
-              Copy client link
-            </Button>
-          </>
+  if (section === 'requirement') {
+    return (
+      <IntakeTab
+        caseItem={caseItem}
+        company={company}
+        onSaveFields={(fields) => updateCaseFields(caseItem.id, fields)}
+        onSaveCompanyMeta={(patch) => updateCase(caseItem.id, patch)}
+      />
+    )
+  }
+
+  if (section === 'extraction') {
+    return (
+      <ExtractionTab
+        caseItem={caseItem}
+        onReview={updateExtraction}
+        onUpload={(doc) =>
+          addDocument(caseItem.id, {
+            name: doc.name,
+            type: doc.type,
+            category: 'other',
+          })
         }
       />
+    )
+  }
 
-      <div className="flex flex-wrap items-center gap-2 border border-line bg-panel px-3 py-2.5 text-[12px] text-muted">
-        <Badge tone="red">{caseItem.caseType}</Badge>
-        <Badge tone={statusTone(caseItem.status)}>{caseItem.status}</Badge>
-        <span>
-          Mandate: <strong className="text-ink">{caseItem.mandateStatus}</strong>
-        </span>
-        <span className="text-stone-300">|</span>
-        <span>
-          NDA: <strong className="text-ink">{caseItem.ndaStatus}</strong>
-        </span>
-        <span className="text-stone-300">|</span>
-        <span>
-          Client link:{' '}
-          <code className="border border-embee-200 bg-embee-50 px-1.5 py-0.5 font-mono text-[11px] text-embee-900">
-            /c/{caseItem.clientLinkToken}
-          </code>
-        </span>
-      </div>
+  if (section === 'mandate') {
+    return <MandateTab caseItem={caseItem} onUpdate={updateMandateNda} />
+  }
 
-      <div className="flex gap-0 overflow-x-auto border border-line bg-panel">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`shrink-0 border-b-2 px-4 py-2.5 text-[13px] font-semibold transition ${
-              tab === t.id
-                ? 'border-embee-800 text-embee-900'
-                : 'border-transparent text-muted hover:text-ink'
-            }`}
+  if (section === 'circulation') {
+    return (
+      <CirculationTab
+        caseItem={caseItem}
+        matches={matches}
+        caseCirculations={caseCirculations}
+        funders={funders}
+        onSend={addCirculation}
+        onUpdateStatus={updateCirculationStatus}
+      />
+    )
+  }
+
+  if (section === 'twopager') {
+    return <TwoPagerPreview caseItem={caseItem} company={company} />
+  }
+
+  return (
+    <Section title="Audit log" subtitle="Every edit with user and time">
+      <ul className="space-y-3">
+        {caseAudit.map((a) => (
+          <li
+            key={a.id}
+            className="flex flex-col gap-0.5 border border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
           >
-            {t.label}
-          </button>
+            <div>
+              <p className="text-sm font-medium text-ink">{a.action}</p>
+              <p className="text-xs text-muted">{a.user}</p>
+            </div>
+            <p className="text-xs text-muted">{a.at}</p>
+          </li>
         ))}
-      </div>
-
-      <div>
-        {tab === 'intake' && (
-          <IntakeTab
-            caseItem={caseItem}
-            company={company}
-            onSaveFields={(fields) => updateCaseFields(caseItem.id, fields)}
-            onSaveCompanyMeta={(patch) =>
-              updateCase(caseItem.id, patch)
-            }
+        {caseAudit.length === 0 ? (
+          <EmptyState
+            title="No activity yet"
+            description="Edits will appear here as the case progresses."
           />
-        )}
-        {tab === 'extraction' && (
-          <ExtractionTab
-            caseItem={caseItem}
-            onReview={updateExtraction}
-            onUpload={(doc) => addDocument(caseItem.id, doc)}
-          />
-        )}
-        {tab === 'mandate' && (
-          <MandateTab
-            caseItem={caseItem}
-            onUpdate={updateMandateNda}
-          />
-        )}
-        {tab === 'circulation' && (
-          <CirculationTab
-            caseItem={caseItem}
-            matches={matches}
-            caseCirculations={caseCirculations}
-            funders={funders}
-            onSend={addCirculation}
-            onUpdateStatus={updateCirculationStatus}
-          />
-        )}
-        {tab === 'twopager' && (
-          <TwoPagerPreview caseItem={caseItem} company={company} />
-        )}
-        {tab === 'audit' && (
-          <Section title="Audit log" subtitle="Every edit with user and time">
-            <ul className="space-y-3">
-              {caseAudit.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex flex-col gap-0.5  border border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-ink">{a.action}</p>
-                    <p className="text-xs text-muted">{a.user}</p>
-                  </div>
-                  <p className="text-xs text-muted">{a.at}</p>
-                </li>
-              ))}
-              {caseAudit.length === 0 ? (
-                <EmptyState
-                  title="No activity yet"
-                  description="Edits will appear here as the case progresses."
-                />
-              ) : null}
-            </ul>
-          </Section>
-        )}
-      </div>
-    </div>
+        ) : null}
+      </ul>
+    </Section>
   )
 }
 
@@ -430,223 +344,11 @@ function IntakeTab({
             />
           </Field>
 
-          {caseItem.caseType === 'Term Loan' && (
-            <>
-              <Field label="Project report status">
-                <Input
-                  value={fields.projectReportStatus ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      projectReportStatus: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Land area">
-                <Input
-                  value={fields.landArea ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({ ...f, landArea: e.target.value }))
-                  }
-                />
-              </Field>
-              <Field label="Land valuation">
-                <Input
-                  value={fields.landValuation ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      landValuation: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Building type">
-                <Input
-                  value={fields.buildingType ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      buildingType: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Building sq ft">
-                <Input
-                  value={fields.buildingSqft ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      buildingSqft: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Architect estimate">
-                <Input
-                  value={fields.architectEstimate ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      architectEstimate: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Plant & machinery notes" className="sm:col-span-2">
-                <Textarea
-                  value={fields.plantMachineryNotes ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      plantMachineryNotes: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Project cost (₹ Cr)">
-                <Input
-                  type="number"
-                  value={fields.projectCost ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      projectCost: Number(e.target.value),
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Promoter contribution (₹ Cr)">
-                <Input
-                  type="number"
-                  value={fields.promoterContribution ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      promoterContribution: Number(e.target.value),
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Loan ask (₹ Cr)">
-                <Input
-                  type="number"
-                  value={fields.loanAsk ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      loanAsk: Number(e.target.value),
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Tenure">
-                <Input
-                  value={fields.tenure ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({ ...f, tenure: e.target.value }))
-                  }
-                />
-              </Field>
-              <Field label="Moratorium">
-                <Input
-                  value={fields.moratorium ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({ ...f, moratorium: e.target.value }))
-                  }
-                />
-              </Field>
-            </>
-          )}
-
-          {caseItem.caseType === 'CC Limit' && (
-            <>
-              <Field label="Current limit (₹ Cr)">
-                <Input
-                  type="number"
-                  value={fields.currentLimit ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      currentLimit: Number(e.target.value),
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Enhancement sought (₹ Cr)">
-                <Input
-                  type="number"
-                  value={fields.enhancementSought ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      enhancementSought: Number(e.target.value),
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Utilisation">
-                <Input
-                  value={fields.utilisation ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      utilisation: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Reason" className="sm:col-span-2">
-                <Textarea
-                  value={fields.enhancementReason ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      enhancementReason: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-            </>
-          )}
-
-          {caseItem.caseType === 'Takeover' && (
-            <>
-              <Field label="Facility to take over" className="sm:col-span-2">
-                <Input
-                  value={fields.facilityToTakeover ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      facilityToTakeover: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Reason" className="sm:col-span-2">
-                <Textarea
-                  value={fields.takeoverReason ?? ''}
-                  onChange={(e) =>
-                    setFields((f) => ({
-                      ...f,
-                      takeoverReason: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-            </>
-          )}
-
-          {(caseItem.caseType === 'Special Situation' ||
-            caseItem.caseType === 'Buyback Funding' ||
-            caseItem.caseType === 'Acquisition Finance') && (
-            <p className="sm:col-span-2  border border-dashed border-line bg-surface px-4 py-3 text-sm text-muted">
-              Template fields for {caseItem.caseType} are proposed in the
-              blueprint — edit requirement and other info above for now.
-            </p>
-          )}
+          <CaseTypeFields
+            caseType={caseItem.caseType}
+            fields={fields}
+            setFields={(updater) => setFields((f) => updater(f))}
+          />
         </div>
       </Section>
     </div>
